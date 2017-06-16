@@ -264,8 +264,16 @@ module Excon
       when :write
         IO.select(nil, [socket], nil, @data[:write_timeout])
       end
-      select || raise(Excon::Errors::Timeout.new("#{type} timeout reached"))
+      select || raise_timeout(socket, type)
     end
+
+    def raise_timeout(socket, type)
+      # not sure this is the propper place to do it
+      socket.close_read
+      socket.close_write
+      raise(Excon::Errors::Timeout.new("#{type} timeout reached"))
+    end
+
 
     def unpacked_sockaddr
       @unpacked_sockaddr ||= ::Socket.unpack_sockaddr_in(@socket.to_io.getsockname)
